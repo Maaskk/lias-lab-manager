@@ -1,0 +1,4 @@
+package ma.lias.entity;
+import jakarta.persistence.*; import java.time.LocalDate;
+@Entity @Table(name="affiliations")
+public class Affiliation { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; @Column(name="member_id") private Long memberId; @Column(name="lab_id") private Long labId; @Column(name="start_date") private LocalDate startDate; @Column(name="end_date") private LocalDate endDate; public Long getId(){return id;} public void setId(Long id){this.id=id;} public Long getMemberId(){return memberId;} public void setMemberId(Long memberId){this.memberId=memberId;} public Long getLabId(){return labId;} public void setLabId(Long labId){this.labId=labId;} public LocalDate getStartDate(){return startDate;} public void setStartDate(LocalDate startDate){this.startDate=startDate;} public LocalDate getEndDate(){return endDate;} public void setEndDate(LocalDate endDate){this.endDate=endDate;} }

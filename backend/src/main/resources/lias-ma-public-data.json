@@ -1,0 +1,34 @@
+{
+  "source": "https://lias.ma/",
+  "logo": "https://lias.ma/images/Logo-LIAS-01.png",
+  "documents": [
+    {
+      "title": "Programme ICAIS 2025",
+      "url": "https://lias.ma/images/Program_ICAIS25.pdf",
+      "type": "PROGRAM"
+    },
+    {
+      "title": "Guide de soumission ICISCT 2026",
+      "url": "https://lias.ma/icisct/submissions",
+      "type": "ADMINISTRATIVE"
+    }
+  ],
+  "lab": {
+    "name": "Laboratoire d’Intelligence Artificielle et Systèmes (LIAS)",
+    "subtitle": "IA • Données • Smart Cities",
+    "establishment": "Faculté des Sciences Ben M’Sick — Université Hassan II de Casablanca",
+    "address": "B.P. 7955 Sidi‑Othmane, Casablanca, Maroc",
+    "email": "lias.fsbm@gmail.com",
+    "phone": "(+212) 6 61 44 24 27",
+    "stats": ["4 équipes permanentes", "42 thèses en cours (2021–2024)", "28 thèses soutenues (2021–2024)", "230+ publications indexées (2021–2024)", "8 projets de recherche en cours"]
+  },
+  "teams": ["ISDIAC", "SIMA", "SDTIC", "ILIAS"],
+  "leadership": [
+    {"name": "Faouzia Benabbou", "role": "Directrice du laboratoire"},
+    {"name": "Abdessamad Belangour", "role": "Directeur adjoint"},
+    {"name": "Nawal Sael", "role": "Cheffe d’équipe ISDIAC"},
+    {"name": "Mohammed Ait Daoud", "role": "Chef d’équipe SIMA"},
+    {"name": "Sara Ouahabi", "role": "Cheffe d’équipe SDTIC"},
+    {"name": "Abdelaziz Ettaoufik", "role": "Chef d’équipe ILIAS"}
+  ]
+}

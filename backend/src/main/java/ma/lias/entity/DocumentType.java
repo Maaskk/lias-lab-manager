@@ -1,0 +1,2 @@
+package ma.lias.entity;
+public enum DocumentType { FINANCING,PROGRAM,ATTESTATION,REPORT,ADMINISTRATIVE,PV,CONVENTION }

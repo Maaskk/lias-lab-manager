@@ -1,0 +1,4 @@
+package ma.lias.entity;
+import jakarta.persistence.*; import java.time.LocalDate;
+@Entity @Table(name="roles_history")
+public class RoleHistory { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; @Column(name="member_id") private Long memberId; @Enumerated(EnumType.STRING) private RoleName role; @Column(name="start_date") private LocalDate startDate; @Column(name="end_date") private LocalDate endDate; public Long getId(){return id;} public void setId(Long id){this.id=id;} public Long getMemberId(){return memberId;} public void setMemberId(Long memberId){this.memberId=memberId;} public RoleName getRole(){return role;} public void setRole(RoleName role){this.role=role;} public LocalDate getStartDate(){return startDate;} public void setStartDate(LocalDate startDate){this.startDate=startDate;} public LocalDate getEndDate(){return endDate;} public void setEndDate(LocalDate endDate){this.endDate=endDate;} }

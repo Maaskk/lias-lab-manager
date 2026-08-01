@@ -1,0 +1,12 @@
+backend/target/
+frontend/node_modules/
+frontend/dist/
+docs/backend/
+uploads/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+!frontend/.env.production
+.env.local

@@ -1,0 +1,4 @@
+package ma.lias.entity;
+import jakarta.persistence.*; import java.time.LocalDateTime;
+@Entity @Table(name="meetings")
+public class Meeting { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; private String title; private LocalDateTime date; @Column(length=5000) private String agenda; @Column(name="pv_url") private String pvUrl; @Column(name="created_by") private Long createdBy; public Long getId(){return id;} public void setId(Long id){this.id=id;} public String getTitle(){return title;} public void setTitle(String title){this.title=title;} public LocalDateTime getDate(){return date;} public void setDate(LocalDateTime date){this.date=date;} public String getAgenda(){return agenda;} public void setAgenda(String agenda){this.agenda=agenda;} public String getPvUrl(){return pvUrl;} public void setPvUrl(String pvUrl){this.pvUrl=pvUrl;} public Long getCreatedBy(){return createdBy;} public void setCreatedBy(Long createdBy){this.createdBy=createdBy;} }

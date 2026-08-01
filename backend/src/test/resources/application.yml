@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:lias_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;NON_KEYWORDS=YEAR
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+  mail:
+    host: localhost
+    port: 1025
+
+app:
+  jwt:
+    secret: test_only_secret_value_with_more_than_sixty_four_characters_lias_lab_manager
+    access-minutes: 15
+    refresh-days: 7
+  seed:
+    initial-password: test_only_initial_password_2026
+  upload-dir: target/test-uploads
+  cors-origins: http://localhost:5173
+  mail-enabled: false
+  public-url: http://localhost:5173

@@ -1,0 +1,4 @@
+package ma.lias.entity;
+import jakarta.persistence.*; import java.time.LocalDateTime;
+@Entity @Table(name="annual_reports")
+public class AnnualReport { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; private int year; @Column(name="generated_at") private LocalDateTime generatedAt = LocalDateTime.now(); @Column(name="file_url") private String fileUrl; @Column(name="generated_by") private Long generatedBy; public Long getId(){return id;} public void setId(Long id){this.id=id;} public int getYear(){return year;} public void setYear(int year){this.year=year;} public LocalDateTime getGeneratedAt(){return generatedAt;} public void setGeneratedAt(LocalDateTime generatedAt){this.generatedAt=generatedAt;} public String getFileUrl(){return fileUrl;} public void setFileUrl(String fileUrl){this.fileUrl=fileUrl;} public Long getGeneratedBy(){return generatedBy;} public void setGeneratedBy(Long generatedBy){this.generatedBy=generatedBy;} }
