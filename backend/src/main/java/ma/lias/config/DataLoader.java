@@ -7,6 +7,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.*;
 import java.util.*;
@@ -28,11 +30,17 @@ public class DataLoader {
       PublicationRepository pubs,
       ConventionRepository conventions,
       DocumentRecordRepository documents,
+      MessageRepository messages,
+      MaterialInventoryRepository materialInventory,
+      MaterialRequestRepository materialRequests,
+      MeetingRepository meetings,
+      MembershipRequestRepository membershipRequests,
       AuditLogRepository audit,
       SystemSettingRepository settings,
       PasswordEncoder encoder,
+      PlatformTransactionManager transactionManager,
       @Value("${app.seed.initial-password:}") String initialPassword) {
-    return args -> {
+    return args -> new TransactionTemplate(transactionManager).executeWithoutResult(transaction -> {
       if (users.count() > 0) return;
       String seedPassword = requireInitialPassword(initialPassword);
 
@@ -61,6 +69,9 @@ public class DataLoader {
       User chiefSimaUser = users.save(user("mohammed.ait.daoud@lias.local", seedPassword, AppRole.TEAM_CHIEF, encoder));
       User chiefSdticUser = users.save(user("sara.ouahabi@lias.local", seedPassword, AppRole.TEAM_CHIEF, encoder));
       User chiefIliasUser = users.save(user("abdelaziz.ettaoufik@lias.local", seedPassword, AppRole.TEAM_CHIEF, encoder));
+      User permanentDemoUser = users.save(user("permanent.demo@lias.local", seedPassword, AppRole.PERMANENT_MEMBER, encoder));
+      User associateDemoUser = users.save(user("associe.demo@lias.local", seedPassword, AppRole.ASSOCIATE_MEMBER, encoder));
+      User doctoralDemoUser = users.save(user("doctorant.demo@lias.local", seedPassword, AppRole.DOCTORAL, encoder));
 
       Member director = members.save(member(directorUser, "Faouzia", "Benabbou", MemberType.PERMANENT, isdiac.getId(), "IA, Cloud, NLP", "Directrice du laboratoire"));
       Member vice = members.save(member(viceUser, "Abdessamad", "Belangour", MemberType.PERMANENT, ilias.getId(), "Ingénierie logicielle, architectures de données", "Directeur adjoint"));
@@ -68,6 +79,9 @@ public class DataLoader {
       Member chiefSima = members.save(member(chiefSimaUser, "Mohammed", "Ait Daoud", MemberType.PERMANENT, sima.getId(), "Systèmes intelligents et modélisation avancée", "Chef d’équipe SIMA"));
       Member chiefSdtic = members.save(member(chiefSdticUser, "Sara", "Ouahabi", MemberType.PERMANENT, sdtic.getId(), "Technologie intelligente", "Cheffe d’équipe SDTIC"));
       Member chiefIlias = members.save(member(chiefIliasUser, "Abdelaziz", "Ettaoufik", MemberType.PERMANENT, ilias.getId(), "IA et systèmes", "Chef d’équipe ILIAS"));
+      Member permanentDemo = members.save(member(permanentDemoUser, "Amine", "El Idrissi", MemberType.PERMANENT, isdiac.getId(), "Apprentissage automatique et NLP", "Membre permanent utilisé pour démontrer les workflows internes."));
+      Member associateDemo = members.save(member(associateDemoUser, "Salma", "Alaoui", MemberType.ASSOCIATE, sima.getId(), "Systèmes intelligents", "Membre associée utilisée pour vérifier les droits de consultation."));
+      Member doctoralDemo = members.save(member(doctoralDemoUser, "Yasmine", "Bennis", MemberType.DOCTORAL, isdiac.getId(), "IA générative et recherche d'information", "Doctorante utilisée pour démontrer le profil et le dépôt de publications."));
 
       List<Member> publicMembers = new ArrayList<>(List.of(director, vice, chiefIsdiac, chiefSima, chiefSdtic, chiefIlias));
       publicMembers.add(savePublicMember(users, members, encoder, seedPassword, "Amal", "Zaouch", isdiac, "Cloud Computing"));
@@ -80,6 +94,9 @@ public class DataLoader {
       publicMembers.add(savePublicMember(users, members, encoder, seedPassword, "Naceur", "Achtaich", sdtic, "Mathématiques appliquées"));
       publicMembers.add(savePublicMember(users, members, encoder, seedPassword, "Youssef", "Sekhara", ilias, "Informatique"));
       publicMembers.add(savePublicMember(users, members, encoder, seedPassword, "Driss", "Bouggar", ilias, "Modélisation mathématique"));
+      publicMembers.add(permanentDemo);
+      publicMembers.add(associateDemo);
+      publicMembers.add(doctoralDemo);
 
       for (Member m : publicMembers) {
         Affiliation a = new Affiliation();
@@ -127,6 +144,29 @@ public class DataLoader {
           "International Conference on Innovative Smart City Technologies, hosted by the Faculty of Sciences Ben M’Sik in Casablanca.",
           LocalDateTime.of(2026, 6, 25, 9, 0), LocalDateTime.of(2026, 6, 27, 18, 0), "FSBM, Casablanca, Morocco", director, "ICISCT’26", false));
 
+      meetings.save(meeting("Réunion de préparation ICAIS", LocalDateTime.of(2025, 10, 15, 14, 0),
+          "Répartition des responsabilités, programme scientifique et logistique.", director));
+
+      messages.saveAll(List.of(
+          message(directorUser, null, null, null, MessageType.GLOBAL, "Bienvenue dans l'espace de communication interne du LIAS."),
+          message(permanentDemoUser, directorUser, null, null, MessageType.DIRECT, "Bonjour Professeure, le compte rendu de l'équipe ISDIAC est prêt."),
+          message(directorUser, permanentDemoUser, null, null, MessageType.DIRECT, "Merci, vous pouvez l'ajouter aux documents de l'événement."),
+          message(chiefIsdiacUser, null, isdiac, null, MessageType.TEAM, "Réunion d'équipe jeudi à 14h pour suivre les travaux en cours."),
+          message(directorUser, null, null, icais, MessageType.EVENT, "Le programme ICAIS est disponible dans les documents de cette édition.")
+      ));
+
+      materialInventory.saveAll(List.of(
+          material("Ordinateur portable", "Poste de calcul mobile pour les activités de recherche.", 6, "Dotation FSBM"),
+          material("Kit IoT", "Capteurs et microcontrôleurs pour les prototypes Smart City.", 10, "Projet SDTIC"),
+          material("GPU de calcul", "Accélérateur dédié aux expérimentations d'apprentissage profond.", 2, "Projet ISDIAC")
+      ));
+      materialRequests.save(materialRequest(permanentDemoUser, "Ordinateur portable", 1,
+          "Besoin pour les expérimentations NLP et les démonstrations de l'équipe."));
+
+      membershipRequests.save(membershipRequest(
+          "Omar El Mansouri", "omar.candidat@example.com", MemberType.DOCTORAL, isdiac,
+          "Je souhaite rejoindre le LIAS pour préparer une thèse sur l'IA explicable."));
+
       documents.saveAll(List.of(
           doc(icais, DocumentType.PROGRAM, "Program_ICAIS25.pdf", "/assets/Program_ICAIS25.pdf", admin),
           doc(null, DocumentType.ADMINISTRATIVE, "Logo-LIAS-01.png", "/assets/Logo-LIAS-01.png", admin),
@@ -148,7 +188,7 @@ public class DataLoader {
       log.setEntityType("System");
       log.setDetails("Initialisation avec données publiques officielles LIAS : équipes, membres, publications, événements, programme ICAIS’25, ICISCT’26, partenaires et coordonnées.");
       audit.save(log);
-    };
+    });
   }
 
   private String requireInitialPassword(String initialPassword) {
@@ -166,6 +206,11 @@ public class DataLoader {
   private TeamChief chief(Mandate mandate, Member m, Team t) { TeamChief c = new TeamChief(); c.setMandateId(mandate.getId()); c.setMemberId(m.getId()); c.setTeamId(t.getId()); c.setStartDate(LocalDate.of(2025, 1, 1)); return c; }
   private Publication publication(String title, String authors, int year, Team team, Member addedBy, String venue) { Publication p = new Publication(); p.setTitle(title); p.setAuthors(authors); p.setYear(year); p.setTeamId(team.getId()); p.setAddedBy(addedBy.getId()); p.setAbstractText("Référence publique LIAS — source/venue : " + venue + "."); p.setPublicationUrl("https://lias.ma/#publications"); return p; }
   private Event event(String title, EventType type, String description, LocalDateTime start, LocalDateTime end, String location, Member organizer, String edition, boolean archived) { Event e = new Event(); e.setTitle(title); e.setType(type); e.setDescription(description); e.setStartDate(start); e.setEndDate(end); e.setLocation(location); e.setOrganizerId(organizer.getId()); e.setEdition(edition); e.setArchived(archived); return e; }
+  private Meeting meeting(String title, LocalDateTime date, String agenda, Member createdBy) { Meeting m = new Meeting(); m.setTitle(title); m.setDate(date); m.setAgenda(agenda); m.setCreatedBy(createdBy.getId()); return m; }
+  private Message message(User sender, User receiver, Team team, Event event, MessageType type, String content) { Message m = new Message(); m.setSenderId(sender.getId()); if (receiver != null) m.setReceiverId(receiver.getId()); if (team != null) m.setTeamId(team.getId()); if (event != null) m.setEventId(event.getId()); m.setMessageType(type); m.setContent(content); return m; }
+  private MaterialInventory material(String name, String description, int quantity, String supplier) { MaterialInventory m = new MaterialInventory(); m.setName(name); m.setDescription(description); m.setQuantity(quantity); m.setSupplier(supplier); m.setReceivedAt(LocalDate.of(2025, 1, 15)); return m; }
+  private MaterialRequest materialRequest(User requestedBy, String name, int quantity, String justification) { MaterialRequest r = new MaterialRequest(); r.setRequestedBy(requestedBy.getId()); r.setMaterialName(name); r.setQuantity(quantity); r.setJustification(justification); return r; }
+  private MembershipRequest membershipRequest(String applicant, String email, MemberType type, Team team, String motivation) { MembershipRequest r = new MembershipRequest(); r.setApplicantName(applicant); r.setEmail(email); r.setRequestedType(type); r.setPreferredTeamId(team.getId()); r.setEstablishment("Université Hassan II de Casablanca"); r.setOriginLab("Candidat externe"); r.setInterests("Intelligence artificielle explicable"); r.setMotivation(motivation); return r; }
   private DocumentRecord doc(Event event, DocumentType type, String filename, String url, User uploadedBy) { DocumentRecord d = new DocumentRecord(); if (event != null) d.setEventId(event.getId()); d.setType(type); d.setFilename(filename); d.setFileUrl(url); d.setUploadedBy(uploadedBy.getId()); return d; }
   private Convention conv(String partner, String country, String description) { Convention c = new Convention(); c.setPartnerName(partner); c.setPartnerCountry(country); c.setDescription(description); return c; }
   private String slug(String value) { return value.toLowerCase(Locale.ROOT).replace("’", "").replace("'", "").replace("é", "e").replace("è", "e").replace("ê", "e").replace("à", "a").replace("ç", "c").replace("û", "u").replace("î", "i").replaceAll("[^a-z0-9]+", ".").replaceAll("^\\.|\\.$", ""); }

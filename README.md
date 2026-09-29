@@ -1,139 +1,268 @@
 # LIAS Lab Manager
 
-LIAS Lab Manager regroupe les opérations courantes d'un laboratoire de recherche dans une application web en français.
+Application web complète pour gérer le laboratoire LIAS : membres, équipes, mandats, demandes d'adhésion, événements, documents, publications, matériel, réunions/PV, conventions, notifications, audit et rapport annuel PDF.
 
-Le projet couvre la gestion des membres, des équipes, des mandats, des publications, des événements, du matériel, des réunions, des conventions et des demandes d'adhésion. Il contient également une messagerie interne, un journal d'audit et la génération du rapport annuel en PDF.
+## Fonctionnalités incluses
 
-## Architecture
+- Backend Spring Boot 3 / Java 17 avec REST API, Spring Security, JWT access token + refresh cookie.
+- Frontend React 18 + Vite + TailwindCSS en français.
+- PostgreSQL + Flyway + JPA/Hibernate.
+- Upload local dans `uploads/` avec validation type/taille 10MB.
+- Rapport annuel PDF généré avec Apache PDFBox.
+- Audit log sur les opérations importantes.
+- Espace public, espace membre, espace directeur et panneau admin.
+- Pages d'erreur `/403`, `/404`, `/500`.
+- Données de démonstration chargées automatiquement au premier démarrage.
 
-```text
-Navigateur
-    |
-    v
-React + Nginx
-    |
-    v
-Spring Boot REST API
-    |
-    v
-PostgreSQL
-```
+## Prérequis
 
-| Composant | Technologies |
-|---|---|
-| Frontend | React 18, Vite, Tailwind CSS, Axios, Zod |
-| Backend | Java 17, Spring Boot 3, Spring Security, JPA, Flyway |
-| Données | PostgreSQL 16 |
-| Authentification | JWT court, refresh token en cookie HTTPOnly |
-| Documents | Upload local contrôlé et rapports PDF avec PDFBox |
-| Déploiement local | Docker Compose et Nginx |
+- Docker + Docker Compose, ou :
+- Java 17+
+- Maven 3.9+
+- Node 18+
+- PostgreSQL 15+
 
-## Fonctions principales
+## Option A — Lancer avec Docker
 
-- annuaire des membres et profils par rôle
-- équipes de recherche, affiliations et mandats
-- publications, projets, partenaires et événements
-- calendrier, notifications et messagerie
-- inventaire du matériel et demandes d'attribution
-- réunions, procès-verbaux et conventions
-- demandes d'adhésion avec circuit de décision
-- administration des utilisateurs, rôles et paramètres
-- journal d'audit des opérations sensibles
-- rapport annuel PDF pour la direction
-
-## Démarrage avec Docker
+Depuis le dossier du projet :
 
 ```bash
 cp .env.example .env
-```
-
-Modifiez au minimum `POSTGRES_PASSWORD`, `JWT_SECRET` et `INITIAL_ADMIN_PASSWORD`, puis lancez les services:
-
-```bash
+# Modifier au minimum JWT_SECRET et POSTGRES_PASSWORD dans .env
 docker compose up --build
 ```
 
-L'application est disponible sur `http://localhost`. Nginx sert le frontend et transmet `/api` et `/uploads` au backend.
+Accès :
 
-Pour arrêter les conteneurs sans supprimer la base:
+- Frontend : http://localhost
+- Backend API : http://localhost/api
+- PostgreSQL : localhost:5432
+
+Le conteneur frontend Nginx sert l'application React et proxy toutes les requêtes `/api` et `/uploads` vers le backend. Le backend n'est pas exposé directement sur Internet dans la configuration Docker finale.
+
+## Option B — Lancer manuellement
+
+### 1. Base PostgreSQL
 
 ```bash
-docker compose down
+createdb lias_lab
+psql -c "CREATE USER lias WITH PASSWORD 'lias';"
+psql -c "GRANT ALL PRIVILEGES ON DATABASE lias_lab TO lias;"
 ```
 
-## Démarrage sans Docker
-
-### Backend
+### 2. Backend
 
 ```bash
 cd backend
-export DB_URL=jdbc:postgresql://localhost:5432/lias_lab
-export DB_USER=lias
-export DB_PASSWORD=lias
-export JWT_SECRET=replace_with_a_random_secret_of_at_least_64_characters
-export INITIAL_ADMIN_PASSWORD=replace_before_first_start
-export CORS_ORIGINS=http://localhost:5173
 mvn spring-boot:run
 ```
 
-### Frontend
+Variables utiles :
+
+```bash
+export DB_URL=jdbc:postgresql://localhost:5432/lias_lab
+export DB_USER=lias
+export DB_PASSWORD=lias
+export JWT_SECRET=replace_with_a_real_random_secret_of_at_least_64_characters
+export CORS_ORIGINS=http://localhost:5173
+```
+
+### 3. Frontend
 
 ```bash
 cd frontend
-npm ci
+npm install
 npm run dev
 ```
 
-Le serveur Vite écoute sur `http://localhost:5173`.
+Accès dev : http://localhost:5173
 
-## Tests
+## Premier accès
 
-```bash
-cd backend
-mvn test
-```
-
-```bash
-cd frontend
-npm ci
-npm test
-npm run build
-```
-
-## Comptes de démonstration
-
-La base vide reçoit un jeu de données local au premier démarrage. Tous les comptes utilisent la valeur de `INITIAL_ADMIN_PASSWORD`.
+Au premier démarrage sur une base vide, l'application crée les comptes internes avec le mot de passe défini dans `INITIAL_ADMIN_PASSWORD`.
 
 | Rôle | Email |
 |---|---|
-| Administrateur | `admin@lias.ma` |
+| Admin | `admin@lias.ma` |
 | Directeur | `faouzia.benabbou@lias.local` |
 | Vice-directeur | `abdessamad.belangour@lias.local` |
-| Membre permanent | `permanent.demo@lias.local` |
+| Membre permanent actif | `permanent.demo@lias.local` |
 | Membre associé | `associe.demo@lias.local` |
 | Doctorant | `doctorant.demo@lias.local` |
+| Responsables d’équipe | adresses `@lias.local` créées depuis les profils publics |
 
-Ces comptes servent uniquement aux tests locaux.
+Pour une vraie mise en production, changez les mots de passe depuis l'administration après la première connexion.
 
-## Données publiques LIAS
+Voir aussi `TEST_ACCOUNTS.md` pour les scénarios de test complets : admin, directeur, membre actif, associé, doctorant, messages directs, messages d’équipe, profil/photo, matériel et adhésions.
 
-Le jeu initial reprend des informations publiques de [lias.ma](https://lias.ma/): présentation du laboratoire, équipes, membres publiés, événements, partenaires et publications visibles.
+## Routes principales
 
-Les adresses personnelles non publiées ne sont pas collectées. Des adresses locales de démonstration sont utilisées à leur place.
+### Public
 
-Le script suivant télécharge les ressources publiques utilisées par l'application:
+- `/` : page d'accueil
+- `/equipes`
+- `/equipes/:id`
+- `/projets`
+- `/partenaires`
+- `/activites`
+- `/activites/:id`
+- `/publications`
+- `/publications/:id`
+- `/rejoindre`
+- `/icais-2025`
+- `/icisct-2026`
+- `/login`
+
+### Portail authentifié
+
+- `/dashboard`
+- `/recherche`
+- `/profil`
+- `/profil/:id`
+- `/membres`
+- `/membres/:id`
+- `/evenements`
+- `/evenements/nouveau`
+- `/evenements/:id`
+- `/documents`
+- `/documents/upload`
+- `/calendrier`
+- `/messages`
+- `/notifications`
+- `/materiel`
+- `/materiel/demandes`
+- `/materiel/demandes/liste`
+- `/reunions`
+- `/reunions/nouvelle`
+- `/conventions`
+- `/conventions/nouvelle`
+- `/rapport-annuel`
+- `/adhesions`
+
+### Admin
+
+- `/admin`
+- `/admin/utilisateurs`
+- `/admin/membres`
+- `/admin/equipes`
+- `/admin/gouvernance`
+- `/admin/mandats`
+- `/admin/roles`
+- `/admin/affiliations`
+- `/admin/materiel`
+- `/admin/audit`
+- `/admin/parametres`
+
+## Sécurité et déploiement
+
+- `JWT_SECRET` est obligatoire en production et doit contenir au moins 64 caractères.
+- Les routes internes exigent un JWT valide. Les routes de décision, rapport annuel, gouvernance, rôles et affiliations sont limitées aux rôles autorisés.
+- Les headers HTTP de sécurité sont activés côté Spring Security et côté Nginx : CSP, HSTS, frame options, referrer policy et XSS/content-type protections.
+- Les uploads sont stockés dans le volume Docker `uploads_data` et servis via `/uploads`.
+- Le frontend utilise `VITE_API_URL=/api` en Docker pour fonctionner derrière le proxy Nginx.
+- Pour une première installation propre, utilisez `docker compose down -v` seulement si vous voulez effacer la base existante.
+
+## Structure
+
+```text
+lias-lab/
+├── backend/
+│   ├── src/main/java/ma/lias/
+│   │   ├── config/
+│   │   ├── controller/
+│   │   ├── dto/
+│   │   ├── entity/
+│   │   ├── exception/
+│   │   ├── repository/
+│   │   ├── security/
+│   │   └── service/
+│   ├── src/main/resources/db/migration/
+│   └── pom.xml
+├── frontend/
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.js
+├── docker-compose.yml
+└── .env.example
+```
+
+## Seed data
+
+Le fichier `DataLoader.java` insère automatiquement au premier démarrage :
+
+- 1 admin
+- 1 directeur
+- 1 vice-directeur
+- 4 chefs d’équipe
+- 4 équipes
+- 19 membres/comptes de démonstration
+- mandats passés et mandat courant
+- publications, événements, réunions/PV, conventions, matériel, demandes, notifications et audit
+
+## Génération du rapport annuel
+
+Connectez-vous comme directeur ou admin, puis allez sur :
+
+```text
+/rapport-annuel
+```
+
+Cliquez sur **Générer PDF**. Le fichier est créé dans :
+
+```text
+uploads/reports/
+```
+
+et servi via :
+
+```text
+/uploads/reports/rapport_annuel_YYYY.pdf
+```
+
+## Notes techniques
+
+- Les comptes `FROZEN` et `DISABLED` ne peuvent pas se connecter.
+- Les dates de naissance sont masquées aux utilisateurs non-admin dans l'API membres.
+- Les opérations de création, modification, décision, upload, changement de statut et génération alimentent `audit_log`.
+- Le refresh token est stocké dans un cookie HTTPOnly sur `/api/auth`.
+- Le frontend utilise un access token en mémoire locale pour simplifier l'expérience de démo.
+- La recherche globale `/recherche` interroge membres, documents, événements et publications.
+- Les PV de réunions et documents de conventions peuvent être archivés depuis leurs pages de détail.
+
+## Import des données publiques du site officiel LIAS
+
+Cette version est préchargée avec les données publiques disponibles sur `https://lias.ma/` :
+
+- présentation du laboratoire, contact, chiffres clés ;
+- équipes ISDIAC, SIMA, SDTIC, ILIAS ;
+- direction et responsables d’équipes ;
+- membres listés publiquement ;
+- publications récentes affichées publiquement ;
+- événements ICAIS 2025, Journée Doctorale, ICISCT 2026 ;
+- partenaires publics ;
+- lien vers le programme ICAIS 2025 PDF et logo officiel.
+
+Les emails personnels des membres n’étant pas publiés sur le site officiel, l’application crée des emails internes de démonstration `@lias.local`. Gardez-les ou remplacez-les par les vraies adresses si le laboratoire vous les donne officiellement.
+
+Pour télécharger localement les assets publics visibles sur le site officiel :
 
 ```bash
 ./scripts/fetch-lias-assets.sh
 ```
 
-## Sécurité
+Cela télécharge :
 
-- les secrets de déploiement restent dans `.env`, qui est ignoré par Git
-- les routes internes exigent une session valide
-- les opérations d'administration vérifient les rôles
-- les uploads contrôlent le type et la taille des fichiers
-- les réponses Nginx et Spring Security ajoutent les principaux en-têtes HTTP de sécurité
-- les actions sensibles alimentent le journal d'audit
+- `backend/uploads/public/Logo-LIAS-01.png`
+- `backend/uploads/public/Program_ICAIS25.pdf`
 
-Avant un déploiement réel, remplacez tous les mots de passe de démonstration, utilisez un stockage de secrets et placez l'application derrière TLS.
+Si Docker a déjà initialisé PostgreSQL avec l’ancienne seed, supprimez le volume avant de relancer pour charger ces nouvelles données :
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+
+## Final public website upgrade
+
+This package includes the final public LIAS website upgrade: real public LIAS data, official logo, ICAIS'25 PDF program, ICISCT 2026 page, searchable program page, smooth navigation, live clock/date display, dark/light mode and custom error pages. See `FINAL_VERSION_NOTES.md` for details.

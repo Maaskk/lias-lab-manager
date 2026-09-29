@@ -40,7 +40,7 @@ public class MaterialRequestController {
     d.setMaterialId(item.getId());
     members.findByUserId(request.getRequestedBy()).ifPresent(m -> d.setMemberId(m.getId()));
     d.setQuantity(request.getQuantity());
-    if(reviewer!=null) d.setDistributedBy(reviewer.getId());
+    if(reviewer!=null) members.findByUserId(reviewer.getId()).ifPresent(m -> d.setDistributedBy(m.getId()));
     distributions.save(d);
   }
   private void notifyRequester(MaterialRequest request, String message){

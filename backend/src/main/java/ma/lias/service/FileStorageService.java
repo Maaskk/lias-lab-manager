@@ -12,11 +12,18 @@ public class FileStorageService {
   @Value("${app.upload-dir:uploads}") private String uploadDir;
   private static final long MAX = 10L * 1024L * 1024L;
   private static final Set<String> ALLOWED = Set.of("application/pdf","image/png","image/jpeg","image/webp","application/zip","text/plain","application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+  private static final Set<String> IMAGES = Set.of("image/png","image/jpeg","image/webp");
   public String save(MultipartFile file, String folder) throws IOException {
+    return save(file, folder, ALLOWED);
+  }
+  public String saveProfilePhoto(MultipartFile file) throws IOException {
+    return save(file, "photos", IMAGES);
+  }
+  private String save(MultipartFile file, String folder, Set<String> allowedTypes) throws IOException {
     if(file == null || file.isEmpty()) return null;
     if(file.getSize() > MAX) throw new IllegalArgumentException("Fichier trop volumineux. Taille maximale : 10MB.");
     String contentType = file.getContentType()==null?"application/octet-stream":file.getContentType();
-    if(!ALLOWED.contains(contentType)) throw new IllegalArgumentException("Type de fichier non autorisé : "+contentType);
+    if(!allowedTypes.contains(contentType)) throw new IllegalArgumentException("Type de fichier non autorisé : "+contentType);
     String clean = file.getOriginalFilename()==null?"file":file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]","_");
     Path dir = Path.of(uploadDir, folder); Files.createDirectories(dir);
     String stored = System.currentTimeMillis()+"_"+clean;

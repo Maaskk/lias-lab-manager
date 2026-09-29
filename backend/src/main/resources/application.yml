@@ -30,7 +30,7 @@ spring:
           starttls:
             enable: ${SMTP_STARTTLS:false}
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${PORT:${SERVER_PORT:8080}}
 app:
   jwt:
     secret: ${JWT_SECRET:}
@@ -40,5 +40,8 @@ app:
   cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost}
   mail-enabled: ${MAIL_ENABLED:false}
   public-url: ${PUBLIC_URL:http://localhost:5173}
+  cookies:
+    secure: ${COOKIE_SECURE:false}
+    same-site: ${COOKIE_SAME_SITE:Lax}
   seed:
     initial-password: ${INITIAL_ADMIN_PASSWORD:}

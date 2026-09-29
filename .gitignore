@@ -6,7 +6,5 @@ uploads/
 *.log
 .DS_Store
 .env
-.env.*
-!.env.example
-!frontend/.env.production
 .env.local
+PRESENTATION_CREDENTIALS.local.md

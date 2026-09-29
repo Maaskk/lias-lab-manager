@@ -14,6 +14,9 @@ const dockerCompose = readFileSync(join(projectRoot, 'docker-compose.yml'), 'utf
 const securitySource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'config', 'SecurityConfig.java'), 'utf8');
 const dataLoaderSource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'config', 'DataLoader.java'), 'utf8');
 const appYaml = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'resources', 'application.yml'), 'utf8');
+const indexCss = readFileSync(join(frontendRoot, 'src', 'index.css'), 'utf8');
+const testAccountsPath = join(projectRoot, 'TEST_ACCOUNTS.md');
+const testAccountsSource = existsSync(testAccountsPath) ? readFileSync(testAccountsPath, 'utf8') : '';
 const adminControllerSource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'controller', 'AdminController.java'), 'utf8');
 const memberControllerSource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'controller', 'MemberController.java'), 'utf8');
 const membershipControllerSource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'controller', 'MembershipRequestController.java'), 'utf8');
@@ -24,6 +27,10 @@ const materialRequestControllerSource = readFileSync(join(projectRoot, 'backend'
 const activeMandateServiceSource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'service', 'ActiveMandateService.java'), 'utf8');
 const reportServiceSource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'service', 'ReportService.java'), 'utf8');
 const searchControllerSource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'controller', 'SearchController.java'), 'utf8');
+const calendarControllerPath = join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'controller', 'CalendarController.java');
+const calendarControllerSource = existsSync(calendarControllerPath) ? readFileSync(calendarControllerPath, 'utf8') : '';
+const envFiles = ['.env', '.env.example'].map((name) => [name, readFileSync(join(projectRoot, name), 'utf8')]);
+const envValue = (source, key) => source.split(/\r?\n/).find((line) => line.startsWith(`${key}=`))?.split('=').slice(1).join('=') || '';
 
 describe('LIAS workflow contracts', () => {
   it('submits public membership requests to the unauthenticated multipart endpoint', () => {
@@ -49,7 +56,7 @@ describe('LIAS workflow contracts', () => {
   it('is deployable behind the frontend container without browser localhost API calls', () => {
     expect(nginxSource).toContain('location /api/');
     expect(nginxSource).toContain('proxy_pass http://backend:8080/api/');
-    expect(nginxSource).toContain('location /uploads/');
+    expect(nginxSource).toContain('location ^~ /uploads/');
     expect(dockerCompose).toContain('VITE_API_URL: /api');
   });
 
@@ -73,6 +80,15 @@ describe('LIAS workflow contracts', () => {
     expect(appSource).not.toContain('defaultValue="Admin123!"');
     expect(appSource).not.toContain('Compte admin local');
     expect(appSource).not.toContain('admin@lias.ma / Admin123!');
+  });
+
+  it('documents complete seeded test accounts outside the login form', () => {
+    expect(testAccountsSource).toContain('admin@lias.ma');
+    expect(testAccountsSource).toContain('faouzia.benabbou@lias.local');
+    expect(testAccountsSource).toContain('permanent.demo@lias.local');
+    expect(testAccountsSource).toContain('doctorant.demo@lias.local');
+    expect(testAccountsSource).toContain('associe.demo@lias.local');
+    expect(testAccountsSource).toContain('INITIAL_ADMIN_PASSWORD');
   });
 
   it('does not hard-code seeded account passwords for deployable installs', () => {
@@ -101,8 +117,13 @@ describe('LIAS workflow contracts', () => {
 
   it('lets admins change user role and status from the admin users screen', () => {
     expect(appSource).toContain('function AdminUsers');
+    expect(appSource).toContain('createUser');
+    expect(appSource).toContain('resetPassword');
     expect(appSource).toContain('api.patch(`/admin/users/${id}/role');
     expect(appSource).toContain('api.patch(`/admin/users/${id}/status');
+    expect(appSource).toContain('api.patch(`/admin/users/${id}/password');
+    expect(appSource).not.toContain('/password?password=');
+    expect(appSource).toContain("api.post('/admin/users'");
     expect(appSource).toContain('AppRole');
     expect(appSource).toContain('UserStatus');
     expect(adminControllerSource).toContain('@PatchMapping("/users/{id}/role")');
@@ -115,6 +136,37 @@ describe('LIAS workflow contracts', () => {
     expect(appSource).toContain('/publications');
     expect(appSource).toContain('ASSOCIATE_MEMBER');
     expect(appSource).toContain('filterNavForRole');
+  });
+
+  it('seeds role-specific accounts and demo workflow data for testing', () => {
+    expect(dataLoaderSource).toContain('permanent.demo@lias.local');
+    expect(dataLoaderSource).toContain('doctorant.demo@lias.local');
+    expect(dataLoaderSource).toContain('associe.demo@lias.local');
+    expect(dataLoaderSource).toContain('MessageRepository messages');
+    expect(dataLoaderSource).toContain('MaterialInventoryRepository materialInventory');
+    expect(dataLoaderSource).toContain('MaterialRequestRepository materialRequests');
+    expect(dataLoaderSource).toContain('message(');
+    expect(dataLoaderSource).toContain('material(');
+    expect(dataLoaderSource).toContain('materialRequest(');
+  });
+
+  it('supports global, direct, team, and event conversations from the messages screen', () => {
+    expect(appSource).toContain('messageScope');
+    expect(appSource).toContain('receiverId');
+    expect(appSource).toContain('teamId');
+    expect(appSource).toContain('eventId');
+    expect(appSource).toContain('messageType');
+    expect(appSource).toContain('/messages?receiverId=');
+    expect(appSource).toContain('/messages?teamId=');
+    expect(appSource).toContain('/messages?eventId=');
+  });
+
+  it('uses a professional institutional visual system instead of bubbly template styling', () => {
+    expect(indexCss).toContain('--brand-ink');
+    expect(indexCss).toContain('--brand-teal');
+    expect(indexCss).toContain('border-radius: 8px');
+    expect(indexCss).toContain('.professional-surface');
+    expect(appSource).toContain('professional-surface');
   });
 
   it('accepts membership requests with director-selected member type and app role', () => {
@@ -151,6 +203,9 @@ describe('LIAS workflow contracts', () => {
     expect(reportServiceSource).toContain('eventsForYear');
     expect(reportServiceSource).toContain('publicationsForYear');
     expect(reportServiceSource).toContain('meetingsForYear');
+    expect(reportServiceSource).toContain('Répartition des membres');
+    expect(reportServiceSource).toContain('Activités scientifiques');
+    expect(reportServiceSource).toContain('Conventions et partenariats');
     expect(reportServiceSource).not.toContain('events.count()');
     expect(reportServiceSource).not.toContain('publications.count()');
   });
@@ -158,7 +213,52 @@ describe('LIAS workflow contracts', () => {
   it('enforces active mandate validation for adhesion decisions and mandate overlap prevention', () => {
     expect(activeMandateServiceSource).toContain('requireActiveDirectorOrAdmin');
     expect(activeMandateServiceSource).toContain('validateNoOverlap');
-    expect(membershipControllerSource).toContain('activeMandates.requireActiveDirectorOrAdmin(actor)');
+    expect(membershipControllerSource).toContain('activeMandates.requireActiveDirector(actor)');
+    expect(membershipControllerSource).not.toContain('legacy contract marker');
+  });
+
+  it('ships real calendar aggregation instead of event cards only', () => {
+    expect(calendarControllerSource).toContain('@RequestMapping("/api/calendar")');
+    expect(calendarControllerSource).toContain('meetings.findAll()');
+    expect(calendarControllerSource).toContain('mandates.findAll()');
+    expect(appSource).toContain("useFetch(`/calendar?");
+    expect(appSource).toContain('calendarDays');
+    expect(appSource).toContain('Réunions');
+  });
+
+  it('uses backend public publications when available instead of static-only public data', () => {
+    expect(appSource).toContain("api.get('/public/publications'");
+    expect(appSource).toContain('backendPublications');
+    expect(appSource).toContain('publicationUrl');
+  });
+
+  it('uses inline decision forms instead of browser prompt dialogs', () => {
+    expect(appSource).not.toContain('window.prompt');
+    expect(appSource).toContain('decisionNotes');
+    expect(appSource).toContain('rejectionReason');
+  });
+
+  it('exposes material fairness data in the UI', () => {
+    expect(appSource).toContain("useFetch('/material/equity'");
+    expect(appSource).toContain('membersWithoutMaterial');
+    expect(appSource).toContain('Membres sans matériel');
+  });
+
+  it('paginates global search responses with result metadata', () => {
+    expect(searchControllerSource).toContain('@RequestParam(defaultValue="20") int limit');
+    expect(searchControllerSource).toContain('page');
+    expect(searchControllerSource).toContain('total');
+    expect(searchControllerSource).toContain('paginate(');
+  });
+
+  it('keeps deployment secrets valid and generated artifacts out of the submitted tree', () => {
+    for (const [name, source] of envFiles) {
+      expect(envValue(source, 'JWT_SECRET').length, `${name} JWT_SECRET length`).toBeGreaterThanOrEqual(64);
+      expect(envValue(source, 'INITIAL_ADMIN_PASSWORD').length, `${name} INITIAL_ADMIN_PASSWORD length`).toBeGreaterThanOrEqual(24);
+    }
+    expect(existsSync(join(projectRoot, 'docs', 'backend', 'target'))).toBe(false);
+    expect(existsSync(join(projectRoot, 'docs', 'backend', 'pom.xml'))).toBe(false);
+    expect(existsSync(join(projectRoot, '.gitignore'))).toBe(true);
   });
 
   it('has real event and document detail screens with authenticated file opening', () => {
@@ -168,7 +268,8 @@ describe('LIAS workflow contracts', () => {
     expect(appSource).toContain('<EventDetail/>');
     expect(appSource).toContain('<DocumentDetail/>');
     expect(eventControllerSource).toContain('documents.findByEventId(id)');
-    expect(eventControllerSource).toContain('messages.findByEventIdOrderBySentAtAsc(id)');
+    expect(eventControllerSource).toContain('messages.findByEventIdAndMessageTypeAndDeletedAtIsNullOrderBySentAtAsc(id,MessageType.EVENT)');
+    expect(eventControllerSource).not.toContain('legacy contract marker');
     expect(documentControllerSource).toContain('nextVersion');
     expect(documentControllerSource).toContain('d.setArchived(true)');
   });
@@ -182,16 +283,39 @@ describe('LIAS workflow contracts', () => {
   });
 
   it('sets publication ownership and enriches profile screens', () => {
-    expect(publicationControllerSource).toContain('body.setAddedBy(u.getId())');
+    expect(publicationControllerSource).toContain('body.setAddedBy(m.getId())');
+    expect(publicationControllerSource).toContain('canModify');
+    expect(publicationControllerSource).not.toContain('legacy marker');
     expect(appSource).toContain('uploadPhoto');
     expect(appSource).toContain('teamName');
     expect(appSource).toContain('data.publications');
+  });
+
+  it('shows uploaded profile photos with previews and reusable avatar rendering', () => {
+    expect(appSource).toContain('function ProfileAvatar');
+    expect(appSource).toContain('photoPreviewUrl');
+    expect(appSource).toContain('URL.createObjectURL');
+    expect(appSource).toContain('Photo actuelle');
+    expect(appSource).toContain('<ProfileAvatar member={data}');
+    expect(appSource).toContain('<ProfileAvatar member={row}');
+  });
+
+  it('lets users start direct messages by choosing members instead of typing raw ids', () => {
+    expect(appSource).toContain('membersByUserId');
+    expect(appSource).toContain('selectedReceiver');
+    expect(appSource).toContain('Choisir un membre');
+    expect(appSource).toContain('name="receiverId"');
+    expect(appSource).toContain('senderName');
+    expect(appSource).toContain('receiverName');
+    expect(appSource).toContain("useFetch('/teams'");
+    expect(appSource).toContain("useFetch('/events'");
   });
 
   it('protects internal uploads instead of permitting every uploaded file publicly', () => {
     expect(securitySource).toContain('/uploads/public/**');
     expect(securitySource).toContain('/uploads/photos/**');
     expect(securitySource).toContain('.requestMatchers("/uploads/**").authenticated()');
+    expect(securitySource).toContain('HttpMethod.POST, "/api/members/*/photo"');
     expect(securitySource).not.toContain('"/uploads/**", "/error").permitAll()');
   });
 });

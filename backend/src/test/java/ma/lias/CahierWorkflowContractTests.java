@@ -14,9 +14,9 @@ class CahierWorkflowContractTests {
     String service = source("service/ActiveMandateService.java");
     String mandate = source("controller/MandateController.java");
     String membership = source("controller/MembershipRequestController.java");
-    assertThat(service).contains("activeMandate", "validateNoOverlap", "requireActiveDirectorOrAdmin", "syncMandateRoles");
+    assertThat(service).contains("activeMandate", "validateNoOverlap", "requireActiveDirector", "syncMandateRoles");
     assertThat(mandate).contains("validateNoOverlap", "syncMandateRoles");
-    assertThat(membership).contains("activeMandates.requireActiveDirectorOrAdmin(actor)");
+    assertThat(membership).contains("activeMandates.requireActiveDirector(actor)");
   }
 
   @Test
@@ -42,7 +42,7 @@ class CahierWorkflowContractTests {
   void publicationOwnershipAndProfileContextArePreserved() throws Exception {
     String publications = source("controller/PublicationController.java");
     String member = source("controller/MemberController.java");
-    assertThat(publications).contains("body.setAddedBy(u.getId())", "canModify", "author", "teamId", "year");
+    assertThat(publications).contains("body.setAddedBy(m.getId())", "canModify", "author", "teamId", "year");
     assertThat(member).contains("teamName", "publications.findByAddedByOrderByYearDescCreatedAtDesc");
   }
 
@@ -57,7 +57,7 @@ class CahierWorkflowContractTests {
   @Test
   void eventDetailsExposeArchiveDocumentsAndDiscussion() throws Exception {
     String events = source("controller/EventController.java");
-    assertThat(events).contains("documents.findByEventId(id)", "messages.findByEventIdOrderBySentAtAsc(id)", "@PatchMapping(\"/{id}/archive\")");
+    assertThat(events).contains("documents.findByEventId(id)", "messages.findByEventIdAndMessageTypeAndDeletedAtIsNullOrderBySentAtAsc(id,MessageType.EVENT)", "@PatchMapping(\"/{id}/archive\")");
     assertThat(events).doesNotContain("repo.deleteById(id)");
   }
 }

@@ -43,6 +43,12 @@ public class ActiveMandateService {
     if (!isActiveDirector(user)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Décision réservée au directeur du mandat actif.");
   }
 
+  public void requireActiveDirector(User user) {
+    if (!isActiveDirector(user)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Décision réservée au directeur du mandat actif.");
+    }
+  }
+
   public void validateNoOverlap(Mandate candidate, Long ignoredId) {
     LocalDate start = candidate.getStartDate();
     LocalDate end = candidate.getEndDate();

@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: lias-postgres
+    container_name: lias-postgresfinal
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-lias_lab}
       POSTGRES_USER: ${POSTGRES_USER:-lias}
@@ -18,7 +18,7 @@ services:
 
   backend:
     build: ./backend
-    container_name: lias-backend
+    container_name: lias-backendfinal
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,6 +37,8 @@ services:
       SMTP_AUTH: ${SMTP_AUTH:-false}
       SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-Lax}
       UPLOAD_DIR: /app/uploads
     expose:
       - "8080"
@@ -48,7 +50,7 @@ services:
       context: ./frontend
       args:
         VITE_API_URL: /api
-    container_name: lias-frontend
+    container_name: lias-frontendfinal
     depends_on:
       - backend
     ports:
