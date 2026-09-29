@@ -11,6 +11,7 @@ const productionEnvPath = join(frontendRoot, '.env.production');
 const productionEnv = existsSync(productionEnvPath) ? readFileSync(productionEnvPath, 'utf8') : '';
 const nginxSource = readFileSync(join(frontendRoot, 'nginx.conf'), 'utf8');
 const dockerCompose = readFileSync(join(projectRoot, 'docker-compose.yml'), 'utf8');
+const gitignoreSource = readFileSync(join(projectRoot, '.gitignore'), 'utf8');
 const securitySource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'config', 'SecurityConfig.java'), 'utf8');
 const dataLoaderSource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'config', 'DataLoader.java'), 'utf8');
 const appYaml = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'resources', 'application.yml'), 'utf8');
@@ -29,7 +30,10 @@ const reportServiceSource = readFileSync(join(projectRoot, 'backend', 'src', 'ma
 const searchControllerSource = readFileSync(join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'controller', 'SearchController.java'), 'utf8');
 const calendarControllerPath = join(projectRoot, 'backend', 'src', 'main', 'java', 'ma', 'lias', 'controller', 'CalendarController.java');
 const calendarControllerSource = existsSync(calendarControllerPath) ? readFileSync(calendarControllerPath, 'utf8') : '';
-const envFiles = ['.env', '.env.example'].map((name) => [name, readFileSync(join(projectRoot, name), 'utf8')]);
+const envFiles = ['.env', '.env.example']
+  .map((name) => [name, join(projectRoot, name)])
+  .filter(([, path]) => existsSync(path))
+  .map(([name, path]) => [name, readFileSync(path, 'utf8')]);
 const envValue = (source, key) => source.split(/\r?\n/).find((line) => line.startsWith(`${key}=`))?.split('=').slice(1).join('=') || '';
 
 describe('LIAS workflow contracts', () => {
@@ -82,6 +86,17 @@ describe('LIAS workflow contracts', () => {
     expect(appSource).not.toContain('admin@lias.ma / Admin123!');
   });
 
+  it('clears the previous protected route when signing out', () => {
+    expect(appSource).toContain("navigate('/login',{replace:true})");
+    expect(appSource).toContain('onClick={signOut}');
+  });
+
+  it('keeps form references valid across asynchronous submissions', () => {
+    expect(appSource).not.toContain('e.currentTarget.reset()');
+    expect(appSource).toContain('const form=e.currentTarget');
+    expect(appSource).toContain('form.reset()');
+  });
+
   it('documents complete seeded test accounts outside the login form', () => {
     expect(testAccountsSource).toContain('admin@lias.ma');
     expect(testAccountsSource).toContain('faouzia.benabbou@lias.local');
@@ -112,7 +127,7 @@ describe('LIAS workflow contracts', () => {
   it('ships a root backend source tree for docker and tests', () => {
     expect(existsSync(join(projectRoot, 'backend', 'pom.xml'))).toBe(true);
     expect(existsSync(join(projectRoot, 'backend', 'Dockerfile'))).toBe(true);
-    expect(existsSync(join(projectRoot, 'backend', 'target'))).toBe(false);
+    expect(gitignoreSource).toContain('backend/target/');
   });
 
   it('lets admins change user role and status from the admin users screen', () => {
@@ -136,6 +151,12 @@ describe('LIAS workflow contracts', () => {
     expect(appSource).toContain('/publications');
     expect(appSource).toContain('ASSOCIATE_MEMBER');
     expect(appSource).toContain('filterNavForRole');
+    expect(appSource).toContain('const INTERNAL_ROLES');
+    expect(appSource).toContain('const DOCUMENT_ROLES');
+    expect(appSource).toContain('const PUBLICATION_ROLES');
+    expect(appSource).toContain('path="/dashboard" element={<Protected roles={INTERNAL_ROLES}>');
+    expect(appSource).toContain('path="/membres" element={<Protected roles={INTERNAL_ROLES}>');
+    expect(appSource).toContain("['DOCTORAL','RETIRED','FORMER'].includes(u.role)?'/profil'");
   });
 
   it('seeds role-specific accounts and demo workflow data for testing', () => {

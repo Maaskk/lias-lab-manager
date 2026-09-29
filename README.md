@@ -2,6 +2,12 @@
 
 Application web complète pour gérer le laboratoire LIAS : membres, équipes, mandats, demandes d'adhésion, événements, documents, publications, matériel, réunions/PV, conventions, notifications, audit et rapport annuel PDF.
 
+## Version en ligne
+
+- Application : https://lias-lab-manager.vercel.app
+- Etat de l'API : https://lias-lab-manager.vercel.app/api/public/health
+- Guide de presentation : `PRESENTATION_PROF_GUIDE.md`
+
 ## Fonctionnalités incluses
 
 - Backend Spring Boot 3 / Java 17 avec REST API, Spring Security, JWT access token + refresh cookie.

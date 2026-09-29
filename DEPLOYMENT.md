@@ -1,5 +1,13 @@
 # Deploiement de production
 
+## URL en ligne
+
+- **Application publique** : https://lias-lab-manager.vercel.app
+- **Verification API** : https://lias-lab-manager.vercel.app/api/public/health
+- **Depot GitHub** : https://github.com/Maaskk/lias-lab-manager
+
+Le domaine Vercel est l'unique URL a communiquer aux utilisateurs. Le backend Railway reste derriere le proxy `/api` et les fichiers derriere `/uploads`.
+
 ## Architecture retenue
 
 - **Frontend React/Vite** : Vercel.
@@ -29,4 +37,4 @@ Le frontend utilise `VITE_API_URL=/api` grace au proxy Vercel. Aucun secret n'es
 6. Un doctorant recoit 403 sur les modules internes.
 7. L'admin ne peut pas prendre la decision reservee au directeur actif.
 
-Les URL finales et le mot de passe de demonstration sont dans `PRESENTATION_CREDENTIALS.local.md`, fichier local ignore par Git.
+Les comptes et le mot de passe de demonstration sont dans `PRESENTATION_CREDENTIALS.local.md`, fichier local ignore par Git.
